@@ -13,6 +13,8 @@
 		B3C35D752CF7CE4100E11DA7 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3C35D742CF7CE3E00E11DA7 /* Persistence.swift */; };
 		B3C35D772CF8C46E00E11DA7 /* SharedCoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3C35D762CF8C46800E11DA7 /* SharedCoreDataManager.swift */; };
 		B3C35D782CF8C4D300E11DA7 /* SharedCoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3C35D762CF8C46800E11DA7 /* SharedCoreDataManager.swift */; };
+		B3C35D7A2CF8D7BF00E11DA7 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = B3C35D792CF8D7B800E11DA7 /* README.md */; };
+		B3C35D7B2CF8D7BF00E11DA7 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = B3C35D792CF8D7B800E11DA7 /* README.md */; };
 		B3DBFAC42C84DAFD002DBC38 /* Widget_QuotesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3DBFAC32C84DAFD002DBC38 /* Widget_QuotesApp.swift */; };
 		B3DBFAC62C84DAFD002DBC38 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3DBFAC52C84DAFD002DBC38 /* ContentView.swift */; };
 		B3DBFAC82C84DAFE002DBC38 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B3DBFAC72C84DAFE002DBC38 /* Assets.xcassets */; };
@@ -71,6 +73,7 @@
 		B37553F92CF6760000E7696A /* Widgets.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Widgets.xcdatamodel; sourceTree = "<group>"; };
 		B3C35D742CF7CE3E00E11DA7 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		B3C35D762CF8C46800E11DA7 /* SharedCoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedCoreDataManager.swift; sourceTree = "<group>"; };
+		B3C35D792CF8D7B800E11DA7 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		B3DBFAC02C84DAFD002DBC38 /* Widget Quotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Widget Quotes.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B3DBFAC32C84DAFD002DBC38 /* Widget_QuotesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Widget_QuotesApp.swift; sourceTree = "<group>"; };
 		B3DBFAC52C84DAFD002DBC38 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -129,6 +132,7 @@
 		B3DBFAB72C84DAFD002DBC38 = {
 			isa = PBXGroup;
 			children = (
+				B3C35D792CF8D7B800E11DA7 /* README.md */,
 				B37553F82CF6760000E7696A /* Widgets.xcdatamodeld */,
 				B3DBFB072C84E819002DBC38 /* QuotesExtension.entitlements */,
 				B3DBFAC22C84DAFD002DBC38 /* Widget Quotes */,
@@ -338,6 +342,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B3C35D7B2CF8D7BF00E11DA7 /* README.md in Resources */,
 				B3DBFACC2C84DAFE002DBC38 /* Preview Assets.xcassets in Resources */,
 				B3DBFAC82C84DAFE002DBC38 /* Assets.xcassets in Resources */,
 			);
@@ -361,6 +366,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B3C35D7A2CF8D7BF00E11DA7 /* README.md in Resources */,
 				B3DBFAFE2C84DC01002DBC38 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
