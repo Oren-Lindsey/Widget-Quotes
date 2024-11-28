@@ -7,21 +7,20 @@
 
 import SwiftUI
 import CoreData
-let rainbowColors = ["red", "orange", "yellow", "green", "mint", "teal", "cyan", "blue", "indigo", "purple", "brown", "gray", "auto"]
-extension AnyGradient: View {
+let rainbowColors = ["auto", "red", "orange", "yellow", "green", "mint", "teal", "cyan", "blue", "indigo", "purple", "brown", "gray"]
+extension AnyGradient: @retroactive View {
     public var body: some View {
         Rectangle().fill(self)
     }
 }
 struct ContentView: View {
-    @Environment(\.managedObjectContext) private var viewContext
     @State private var showingPopover = false
     @State var content: String = ""
     @State var citation: String = ""
     @State var bgColor: String = "auto"
     @Environment(\.colorScheme) var colorScheme
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Widget.timestamp, ascending: true)], animation: .default) private var widgets: FetchedResults<Widget>
+    @Environment(\.managedObjectContext) var context
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Widget.timestamp, ascending: true)], animation: .default) private var widgets: FetchedResults<Widget>
     var body: some View {
         NavigationStack {
             List {
@@ -59,13 +58,17 @@ struct ContentView: View {
             .padding()
         Form {
             Section(header: Text("Content")) {
-                TextField("Widget content", text: $content)
+                TextField("Widget content", text: $content, axis: .vertical)
                 TextField("Citation (optional)", text: $citation)
             }
             Section(header: Text("Color")) {
                 Picker("Select a background color", selection: $bgColor) {
                     ForEach(rainbowColors, id: \.self) {
-                        Text($0).foregroundStyle(getColorFromName(name: $0))
+                        if $0 != "auto" {
+                            Text($0).foregroundStyle(getColorFromName(name: $0))
+                        } else {
+                            Text("default").foregroundStyle(.black)
+                        }
                     }
                 }.pickerStyle(.wheel)
             }
@@ -77,14 +80,15 @@ struct ContentView: View {
     }
     private func add(content: String, citation: String, bgColor: String) {
         withAnimation {
-            let newItem = Widget(context: viewContext)
+            let newItem = Widget(context: context)
             newItem.timestamp = Date()
             newItem.content = content
             newItem.citation = citation
             newItem.bgColor = bgColor
             newItem.id = UUID()
             do {
-                try viewContext.save()
+                try context.save()
+                print("Saved")
             } catch {
                 // Replace this implementation with code to handle the error appropriately.
                 // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
@@ -95,11 +99,12 @@ struct ContentView: View {
     }
 
     private func deleteItems(offsets: IndexSet) {
+        //let context = SharedCoreDataManager.shared.viewContext
         withAnimation {
-            offsets.map { widgets[$0] }.forEach(viewContext.delete)
+            offsets.map { widgets[$0] }.forEach(context.delete)
 
             do {
-                try viewContext.save()
+                try context.save()
             } catch {
                 // Replace this implementation with code to handle the error appropriately.
                 // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.

@@ -7,6 +7,7 @@
 
 import WidgetKit
 import SwiftUI
+import CoreData
 func getColorFromName(name: String) -> Color {
         switch name {
         case "auto": return Color.white
@@ -27,25 +28,7 @@ func getColorFromName(name: String) -> Color {
         default: return Color.black
         }
 }
-extension UserDefaults {
 
-    func color(forKey key: String) -> Color? {
-        var color: Color?
-        if let colorData = data(forKey: key) {
-            color = NSKeyedUnarchiver.unarchiveObject(with: colorData) as? Color
-        }
-        return color
-    }
-
-    func set(_ value: Color?, forKey key: String) {
-        var colorData: Data?
-        if let color = value {
-            colorData = NSKeyedArchiver.archivedData(withRootObject: color)
-        }
-        set(colorData, forKey: key)
-    }
-
-}
 struct QuotesEntry: TimelineEntry {
     var date: Date
     var timestamp: Date
@@ -55,42 +38,53 @@ struct QuotesEntry: TimelineEntry {
     let id: UUID
 }
 struct Provider: TimelineProvider {
-    func placeholder(in context: Context) -> QuotesEntry {
-        QuotesEntry(date: Date(), timestamp: Date(), content: "Quote Here", citation: "", bgColor: Color(UIColor.tertiarySystemFill), id: UUID())
+        let context = SharedCoreDataManager.shared.viewContext
+        //@FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Widget.timestamp, ascending: true)], animation: .default) private var widgets: FetchedResults<Widget>
+        /*private func fetchLatestEntry() -> QuotesEntry? {
+            let fetchRequest: NSFetchRequest<Widget> = Widget.fetchRequest()
+            fetchRequest.fetchLimit = 1
+            do {
+                let latest = try context.fetch(fetchRequest).first
+                if latest == nil { return nil }
+                return QuotesEntry(date: Date(), timestamp: latest!.timestamp ?? Date(), content: latest!.content ?? "", citation: latest!.citation ?? "", bgColor: getColorFromName(name: latest!.bgColor!), id: UUID())
+            } catch {
+                print("Error fetching data: \(error)")
+            }
+            return nil
+        }*/
+    private func fetchLatestEntry() -> QuotesEntry? {
+        let fetchRequest: NSFetchRequest<Widget> = Widget.fetchRequest()
+        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: false)]
+        fetchRequest.fetchLimit = 1
+
+        do {
+            let results = try context.fetch(fetchRequest)
+            if let latest = results.first {
+                return QuotesEntry(date: Date(), timestamp: latest.timestamp ?? Date(), content: latest.content ?? "", citation: latest.citation ?? "", bgColor: getColorFromName(name: latest.bgColor!), id: UUID())
+            }
+        } catch {
+            print("Error fetching data: \(error)")
+        }
+        return QuotesEntry(date: Date(), timestamp: Date(), content: "No Data", citation: "", bgColor: .clear, id: UUID())
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (QuotesEntry) -> ()) {
-        let entry = QuotesEntry(date: Date(), timestamp: Date(), content: "Quote Here", citation: "", bgColor: Color(UIColor.tertiarySystemFill), id: UUID())
-        completion(entry)
-    }
-    func getQuote() -> String {
-        return "e"
-    }
-    func getCitation() -> String {
-        // make sure you use your app group identifier as the suitname
-        return ""
-    }
-    func getColor() -> Color {
-        return(Color(UIColor.tertiarySystemFill))
-    }
-    func getID() -> UUID {
-        return UUID()
-    }
-    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        var entries: [QuotesEntry] = []
-        for _ in 0 ..< 5 {
-            let currentDate = Date()
-            let widgetMessage: String = getQuote()
-            let citation: String = getCitation()
-            let color: Color = getColor()
-            let id: UUID = getID()
-            let entry = QuotesEntry(date: currentDate, timestamp: currentDate, content: widgetMessage, citation: citation, bgColor: color, id: id)
-            entries.append(entry)
+        func placeholder(in context: Context) -> QuotesEntry {
+            return QuotesEntry(date: Date(), timestamp: Date(), content: "Loading...", citation: "", bgColor: .red, id: UUID())
         }
 
-        let timeline = Timeline(entries: entries, policy: .atEnd)
-        completion(timeline)
-    }
+        func getSnapshot(in context: Context, completion: @escaping (QuotesEntry) -> ()) {
+            let entry = fetchLatestEntry() ?? QuotesEntry(date: Date(), timestamp: Date(), content: "No Data", citation: "", bgColor: .clear, id: UUID())
+            return completion(entry)
+        }
+
+        func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
+            var entries: [QuotesEntry] = []
+            let entry = fetchLatestEntry() ?? QuotesEntry(date: Date(), timestamp: Date(), content: "No Data", citation: "", bgColor: .clear, id: UUID())
+            entries.append(entry)
+
+            let timeline = Timeline(entries: entries, policy: .atEnd)
+            completion(timeline)
+        }
 }
 
 struct QuotesEntryView : View {
@@ -161,14 +155,14 @@ struct Quotes: SwiftUI.Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             if #available(iOS 17.0, *) {
-                QuotesEntryView(entry: entry).containerBackground(entry.bgColor.gradient, for: .widget)
+                QuotesEntryView(entry: entry).containerBackground(entry.bgColor.gradient, for: .widget).padding()
             } else {
                 QuotesEntryView(entry: entry)
                     .padding()
             }
         }
         .configurationDisplayName("Quote")
-        .description("Displays a customizable quote.")
+        .description("Displays customizable text.")
         #if os(watchOS)
         .supportedFamilies([.accessoryCircular,
                             .accessoryRectangular, .accessoryInline])

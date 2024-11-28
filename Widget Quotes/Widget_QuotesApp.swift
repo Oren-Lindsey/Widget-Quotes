@@ -9,10 +9,9 @@ import SwiftUI
 
 @main
 struct Widget_QuotesApp: App {
-    let persistenceContainer = PersistenceController.shared
     var body: some Scene {
         WindowGroup {
-            ContentView().environment(\.managedObjectContext, persistenceContainer.container.viewContext)
+            ContentView().environment(\.managedObjectContext, SharedCoreDataManager.shared.viewContext)
         }
     }
 }
