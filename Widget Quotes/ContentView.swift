@@ -35,20 +35,20 @@ struct ContentView: View {
                             }.background(getColorFromName(name: widget.bgColor ?? "").gradient).cornerRadius(10).padding(.vertical, 1)
                     }.onDelete(perform: deleteItems).listRowSeparator(.hidden)
             }.listStyle(.plain).scrollContentBackground(.hidden).navigationTitle("Widget Quotes").toolbar {
-                #if os(iOS)
-                    ToolbarItem(placement: .navigationBarTrailing) {
+#if os(iOS)
+                    ToolbarItem(placement: .primaryAction) {
                         EditButton()
                     }
-                #endif
-                    ToolbarItem {
-                        Button {
-                            showingPopover = true
-                        } label: {
-                            Label("New Widget", systemImage: "plus")
-                        }.popover(isPresented: $showingPopover) {
-                            newWidgetMenu
-                        }
+#endif
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingPopover = true
+                    } label: {
+                        Label("New Widget", systemImage: "plus")
+                    }.popover(isPresented: $showingPopover) {
+                        newWidgetMenu
                     }
+                }
             }
         }
     }
@@ -75,6 +75,9 @@ struct ContentView: View {
             Button("Create Widget") {
                 add(content: content, citation: citation, bgColor: bgColor)
                 showingPopover = false
+                content = ""
+                citation = ""
+                bgColor = "auto"
             }
         }
     }
