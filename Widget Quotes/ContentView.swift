@@ -31,6 +31,7 @@ func getColorFromName(name: String) -> Color {
         case "purple": return Color.purple
         case "indigo": return Color.indigo
         case "brown": return Color.brown
+        case "primary": return Color.primary
         default: return Color.black
         }
 }
@@ -58,6 +59,7 @@ struct ContentView: View {
     @State var fontWeight: String = "regular"
     @State var title: String = ""
     @State var previewColor: String = "red"
+    @State var previewText: String = "primary"
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.managedObjectContext) var context
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Widget.timestamp, ascending: true)], animation: .default) private var widgets: FetchedResults<Widget>
@@ -128,6 +130,14 @@ struct ContentView: View {
             } else {
                 previewColor = bgColor
             }
+        }.onChange(of: previewColor) {
+            if previewColor == "black" {
+                previewText = "white"
+            } else if previewColor == "white" {
+                previewText = "black"
+            } else {
+                previewText = "primary"
+            }
         }
     }
     @ViewBuilder var newWidgetMenu: some View {
@@ -158,10 +168,10 @@ struct ContentView: View {
                         .overlay(
                             VStack {
                                 Spacer()
-                                Text(content).font(.system(size: fontSize)).fontWeight(getFontWeightFromName(name: fontWeight))
+                                Text(content).font(.system(size: fontSize)).fontWeight(getFontWeightFromName(name: fontWeight)).foregroundStyle(getColorFromName(name: previewText))
                                 Spacer()
                                 if citation.count > 0 {
-                                    Text(citation).font(.system(size: fontSize - 1)).fontWeight(getFontWeightFromName(name: fontWeight))
+                                    Text(citation).font(.system(size: fontSize - 1)).fontWeight(getFontWeightFromName(name: fontWeight)).foregroundStyle(getColorFromName(name: previewText))
                                 }
                             }.padding()
                         ).padding([.horizontal], 50)
