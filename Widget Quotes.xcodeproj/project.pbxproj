@@ -7,9 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B37553F32CF673D900E7696A /* WidgetEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B37553F22CF673D400E7696A /* WidgetEditor.swift */; };
-		B37553FA2CF6760000E7696A /* Widgets.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = B37553F82CF6760000E7696A /* Widgets.xcdatamodeld */; };
-		B37553FB2CF6760000E7696A /* Widgets.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = B37553F82CF6760000E7696A /* Widgets.xcdatamodeld */; };
 		B3C35D772CF8C46E00E11DA7 /* SharedCoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3C35D762CF8C46800E11DA7 /* SharedCoreDataManager.swift */; };
 		B3C35D782CF8C4D300E11DA7 /* SharedCoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3C35D762CF8C46800E11DA7 /* SharedCoreDataManager.swift */; };
 		B3C35D7A2CF8D7BF00E11DA7 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = B3C35D792CF8D7B800E11DA7 /* README.md */; };
@@ -27,6 +24,9 @@
 		B3DBFAFC2C84DC00002DBC38 /* Quotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3DBFAFB2C84DC00002DBC38 /* Quotes.swift */; };
 		B3DBFAFE2C84DC01002DBC38 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B3DBFAFD2C84DC01002DBC38 /* Assets.xcassets */; };
 		B3DBFB022C84DC01002DBC38 /* QuotesExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B3DBFAF22C84DC00002DBC38 /* QuotesExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B3F923B02D6D0A960071C669 /* WidgetDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F923AF2D6D0A960071C669 /* WidgetDetail.swift */; };
+		B3F923B62D6D0BB20071C669 /* Widgets.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = B3F923B42D6D0BB20071C669 /* Widgets.xcdatamodeld */; };
+		B3F923B72D6D0BB20071C669 /* Widgets.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = B3F923B42D6D0BB20071C669 /* Widgets.xcdatamodeld */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,8 +68,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		B37553F22CF673D400E7696A /* WidgetEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetEditor.swift; sourceTree = "<group>"; };
-		B37553F92CF6760000E7696A /* Widgets.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Widgets.xcdatamodel; sourceTree = "<group>"; };
 		B3C35D762CF8C46800E11DA7 /* SharedCoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedCoreDataManager.swift; sourceTree = "<group>"; };
 		B3C35D792CF8D7B800E11DA7 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		B3DBFAC02C84DAFD002DBC38 /* Widget Quotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Widget Quotes.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -91,6 +89,8 @@
 		B3DBFAFD2C84DC01002DBC38 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B3DBFAFF2C84DC01002DBC38 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B3DBFB072C84E819002DBC38 /* QuotesExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = QuotesExtension.entitlements; sourceTree = "<group>"; };
+		B3F923AF2D6D0A960071C669 /* WidgetDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDetail.swift; sourceTree = "<group>"; };
+		B3F923B52D6D0BB20071C669 /* Widgets.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Widgets.xcdatamodel; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -131,8 +131,8 @@
 			isa = PBXGroup;
 			children = (
 				B3C35D792CF8D7B800E11DA7 /* README.md */,
-				B37553F82CF6760000E7696A /* Widgets.xcdatamodeld */,
 				B3DBFB072C84E819002DBC38 /* QuotesExtension.entitlements */,
+				B3F923B42D6D0BB20071C669 /* Widgets.xcdatamodeld */,
 				B3DBFAC22C84DAFD002DBC38 /* Widget Quotes */,
 				B3DBFAD42C84DAFE002DBC38 /* Widget QuotesTests */,
 				B3DBFADE2C84DAFE002DBC38 /* Widget QuotesUITests */,
@@ -157,12 +157,12 @@
 			isa = PBXGroup;
 			children = (
 				B3C35D762CF8C46800E11DA7 /* SharedCoreDataManager.swift */,
-				B37553F22CF673D400E7696A /* WidgetEditor.swift */,
 				B3DBFAC32C84DAFD002DBC38 /* Widget_QuotesApp.swift */,
 				B3DBFAC52C84DAFD002DBC38 /* ContentView.swift */,
 				B3DBFAC72C84DAFE002DBC38 /* Assets.xcassets */,
 				B3DBFAC92C84DAFE002DBC38 /* Widget_Quotes.entitlements */,
 				B3DBFACA2C84DAFE002DBC38 /* Preview Content */,
+				B3F923AF2D6D0A960071C669 /* WidgetDetail.swift */,
 			);
 			path = "Widget Quotes";
 			sourceTree = "<group>";
@@ -376,10 +376,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				B3DBFAC62C84DAFD002DBC38 /* ContentView.swift in Sources */,
-				B37553F32CF673D900E7696A /* WidgetEditor.swift in Sources */,
 				B3DBFAC42C84DAFD002DBC38 /* Widget_QuotesApp.swift in Sources */,
-				B37553FA2CF6760000E7696A /* Widgets.xcdatamodeld in Sources */,
 				B3C35D772CF8C46E00E11DA7 /* SharedCoreDataManager.swift in Sources */,
+				B3F923B62D6D0BB20071C669 /* Widgets.xcdatamodeld in Sources */,
+				B3F923B02D6D0A960071C669 /* WidgetDetail.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -404,8 +404,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B37553FB2CF6760000E7696A /* Widgets.xcdatamodeld in Sources */,
 				B3DBFAFC2C84DC00002DBC38 /* Quotes.swift in Sources */,
+				B3F923B72D6D0BB20071C669 /* Widgets.xcdatamodeld in Sources */,
 				B3DBFAFA2C84DC00002DBC38 /* QuotesBundle.swift in Sources */,
 				B3C35D782CF8C4D300E11DA7 /* SharedCoreDataManager.swift in Sources */,
 			);
@@ -834,12 +834,12 @@
 /* End XCConfigurationList section */
 
 /* Begin XCVersionGroup section */
-		B37553F82CF6760000E7696A /* Widgets.xcdatamodeld */ = {
+		B3F923B42D6D0BB20071C669 /* Widgets.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
-				B37553F92CF6760000E7696A /* Widgets.xcdatamodel */,
+				B3F923B52D6D0BB20071C669 /* Widgets.xcdatamodel */,
 			);
-			currentVersion = B37553F92CF6760000E7696A /* Widgets.xcdatamodel */;
+			currentVersion = B3F923B52D6D0BB20071C669 /* Widgets.xcdatamodel */;
 			path = Widgets.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;

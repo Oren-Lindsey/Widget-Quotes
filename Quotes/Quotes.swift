@@ -16,10 +16,15 @@ struct Quote: AppEntity {
     let bgColor: Color
     let id: UUID
     let content: String
+    let fontSize: Double
+    let fontWeight: String
+    let title: String
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "Quote"
     static var defaultQuery = QuotesQuery()
     var displayRepresentation: DisplayRepresentation {
-        if citation.count > 0 {
+        if title.count > 0 {
+            DisplayRepresentation(title: "\(title)")
+        } else if citation.count > 0 {
             DisplayRepresentation(title: "\(citation)")
         } else {
             DisplayRepresentation(title: "\(content)")
@@ -30,14 +35,14 @@ struct QuotesQuery: EntityQuery {
     func entities(for identifiers: [Quote.ID]) async throws -> [Quote] {
         let entries = fetchAllEntries()
         let quotes = entries.map {
-            Quote(date: $0.date, timestamp: $0.timestamp, citation: $0.citation, bgColor: $0.bgColor, id: $0.id, content: $0.content)
+            Quote(date: $0.date, timestamp: $0.timestamp, citation: $0.citation, bgColor: $0.bgColor, id: $0.id, content: $0.content, fontSize: $0.fontSize, fontWeight: $0.fontWeight, title: $0.title)
         }
         return quotes
     }
     func suggestedEntities() async throws -> [Quote] {
         let entries = fetchLatestEntries()
         let quotes = entries.map {
-            Quote(date: $0.date, timestamp: $0.timestamp, citation: $0.citation, bgColor: $0.bgColor, id: $0.id, content: $0.content)
+            Quote(date: $0.date, timestamp: $0.timestamp, citation: $0.citation, bgColor: $0.bgColor, id: $0.id, content: $0.content, fontSize: $0.fontSize, fontWeight: $0.fontWeight, title: $0.title)
         }
         return quotes
     }
@@ -61,7 +66,7 @@ struct SelectWidgetIntent: WidgetConfigurationIntent {
 }
 func getColorFromName(name: String) -> Color {
         switch name {
-        case "auto": return Color.white
+        case "auto": return Color.clear
         case "gray": return Color.gray
         case "white": return Color.white
         case "red": return Color.red
@@ -79,7 +84,20 @@ func getColorFromName(name: String) -> Color {
         default: return Color.black
         }
 }
-
+func getFontWeightFromName(name: String) -> Font.Weight {
+    switch name {
+        case "black": return .black
+        case "heavy": return .heavy
+        case "bold": return .bold
+        case "semibold": return .semibold
+        case "medium": return .medium
+        case "regular": return .regular
+        case "light": return .light
+        case "thin": return .thin
+        case "ultralight": return .ultraLight
+        default: return .regular
+    }
+}
 struct QuotesEntry: TimelineEntry {
     var date: Date
     var timestamp: Date
@@ -87,6 +105,9 @@ struct QuotesEntry: TimelineEntry {
     let citation: String
     let bgColor: Color
     let id: UUID
+    let fontSize: Double
+    let fontWeight: String
+    let title: String
 }
 func fetchLatestEntry() -> QuotesEntry? {
     let context = SharedCoreDataManager.shared.viewContext
@@ -97,12 +118,12 @@ func fetchLatestEntry() -> QuotesEntry? {
     do {
         let results = try context.fetch(fetchRequest)
         if let latest = results.first {
-            return QuotesEntry(date: Date(), timestamp: latest.timestamp ?? Date(), content: latest.content ?? "", citation: latest.citation ?? "", bgColor: getColorFromName(name: latest.bgColor!), id: UUID())
+            return QuotesEntry(date: Date(), timestamp: latest.timestamp ?? Date(), content: latest.content ?? "", citation: latest.citation ?? "", bgColor: getColorFromName(name: latest.bgColor!), id: UUID(), fontSize: latest.fontSize, fontWeight: latest.fontWeight ?? "regular", title: "")
         }
     } catch {
         print("Error fetching data: \(error)")
     }
-    return QuotesEntry(date: Date(), timestamp: Date(), content: "No Data", citation: "", bgColor: .clear, id: UUID())
+    return QuotesEntry(date: Date(), timestamp: Date(), content: "No Data", citation: "", bgColor: .clear, id: UUID(), fontSize: 12.0, fontWeight: "regular", title: "")
 }
 func fetchLatestEntries() -> [QuotesEntry] {
     let context = SharedCoreDataManager.shared.viewContext
@@ -113,7 +134,7 @@ func fetchLatestEntries() -> [QuotesEntry] {
         let results = try context.fetch(fetchRequest)
         if !results.isEmpty {
             return results.map {
-                QuotesEntry(date: Date(), timestamp: $0.timestamp ?? Date(), content: $0.content ?? "", citation: $0.citation ?? "", bgColor: getColorFromName(name: $0.bgColor!), id: $0.id!)
+                QuotesEntry(date: Date(), timestamp: $0.timestamp ?? Date(), content: $0.content ?? "", citation: $0.citation ?? "", bgColor: getColorFromName(name: $0.bgColor!), id: $0.id!, fontSize: $0.fontSize, fontWeight: $0.fontWeight ?? "regular", title: $0.title ?? "")
             }
         }
     } catch {
@@ -129,7 +150,7 @@ func fetchAllEntries() -> [QuotesEntry] {
         let results = try context.fetch(fetchRequest)
         if !results.isEmpty {
             return results.map {
-                QuotesEntry(date: Date(), timestamp: $0.timestamp ?? Date(), content: $0.content ?? "", citation: $0.citation ?? "", bgColor: getColorFromName(name: $0.bgColor!), id: $0.id!)
+                QuotesEntry(date: Date(), timestamp: $0.timestamp ?? Date(), content: $0.content ?? "", citation: $0.citation ?? "", bgColor: getColorFromName(name: $0.bgColor!), id: $0.id!, fontSize: $0.fontSize, fontWeight: $0.fontWeight ?? "regular", title: $0.title ?? "")
             }
         }
     } catch {
@@ -142,25 +163,16 @@ struct Provider: AppIntentTimelineProvider {
         let context = SharedCoreDataManager.shared.viewContext
 
         func placeholder(in context: Context) -> QuotesEntry {
-            return QuotesEntry(date: Date(), timestamp: Date(), content: "Loading...", citation: "", bgColor: .red, id: UUID())
+            return QuotesEntry(date: Date(), timestamp: Date(), content: "Loading...", citation: "", bgColor: .red, id: UUID(), fontSize: 10, fontWeight: "regular", title: "")
         }
 
         func snapshot(for configuration: SelectWidgetIntent, in context: Context) async -> QuotesEntry {
-            let entry = fetchLatestEntry() ?? QuotesEntry(date: Date(), timestamp: Date(), content: "No Data", citation: "", bgColor: .clear, id: UUID())
+            let entry = fetchLatestEntry() ?? QuotesEntry(date: Date(), timestamp: Date(), content: "No Data", citation: "", bgColor: .clear, id: UUID(), fontSize: 10, fontWeight: "regular", title: "")
             return entry
         }
-
-        /*func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-            var entries: [QuotesEntry] = []
-            let entry = fetchLatestEntry() ?? QuotesEntry(date: Date(), timestamp: Date(), content: "No Data", citation: "", bgColor: .clear, id: UUID())
-            entries.append(entry)
-
-            let timeline = Timeline(entries: entries, policy: .atEnd)
-            completion(timeline)
-        }*/
     func timeline(for configuration: SelectWidgetIntent, in context: Context) async -> Timeline<QuotesEntry> {
         let q = configuration.quote
-        let entry = QuotesEntry(date: Date(), timestamp: q.timestamp, content: q.content, citation: q.citation, bgColor: q.bgColor, id: q.id)
+        let entry = QuotesEntry(date: Date(), timestamp: q.timestamp, content: q.content, citation: q.citation, bgColor: q.bgColor, id: q.id, fontSize: q.fontSize, fontWeight: q.fontWeight, title: q.title)
         let timeline = Timeline(entries: [entry], policy: .never)
         return timeline
     }
@@ -175,54 +187,59 @@ struct QuotesEntryView : View {
     var body: some View {
         switch family {
         case .accessoryCircular:
-            Text(entry.content).font(.system(size: 10))
+            Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(true)
         case .accessoryRectangular:
             VStack {
-                if entry.content.count > 25 {
-                    Text(entry.content).font(.system(size: 10))
-                } else {
-                    Text(entry.content)
-                }
+                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight))
                 if entry.citation != "" {
-                    Text(entry.citation).font(.system(size: 10))
+                    Text(entry.citation).font(.system(size: entry.fontSize - 1)).fontWeight(getFontWeightFromName(name: entry.fontWeight))
                 }
-            }
+            }.widgetAccentable(true)
         case .accessoryInline:
-            Text(entry.content)
+            Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(true)
         case .systemSmall:
             VStack {
                 Spacer()
-                Text(entry.content).font(.callout)
+                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(true)
                 Spacer()
                 if entry.citation != "" {
-                    Text(entry.citation).font(.caption)
+                    Text(entry.citation).font(.system(size: entry.fontSize - 1)).fontWeight(getFontWeightFromName(name: entry.fontWeight))
                 }
             }
         case .systemLarge:
             VStack {
                 Spacer()
-                Text(entry.content).font(.callout)
+                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(true)
                 Spacer()
                 if entry.citation != "" {
-                    Text(entry.citation).font(.caption)
+                    Text(entry.citation).font(.system(size: entry.fontSize - 1)).fontWeight(getFontWeightFromName(name: entry.fontWeight))
                 }
             }
         case .systemMedium:
             VStack {
                 Spacer()
-                Text(entry.content).font(.callout)
+                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(true)
                 Spacer()
                 if entry.citation != "" {
-                    Text(entry.citation).font(.caption)
+                    Text(entry.citation).font(.system(size: entry.fontSize - 1)).fontWeight(getFontWeightFromName(name: entry.fontWeight))
+                }
+            }
+        case .systemExtraLarge:
+            VStack {
+                Spacer()
+                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(true)
+                Spacer()
+                if entry.citation != "" {
+                    Text(entry.citation).font(.system(size: entry.fontSize - 1)).fontWeight(getFontWeightFromName(name: entry.fontWeight))
                 }
             }
         default:
             VStack {
                 Spacer()
-                Text(entry.content).font(.callout)
+                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(true)
                 Spacer()
                 if entry.citation != "" {
-                    Text(entry.citation).font(.caption)
+                    Text(entry.citation).font(.system(size: entry.fontSize - 1)).fontWeight(getFontWeightFromName(name: entry.fontWeight))
                 }
             }
         }
@@ -231,6 +248,7 @@ struct QuotesEntryView : View {
 @main
 struct Quotes: SwiftUI.Widget {
     let kind: String = "Quotes"
+    @Environment(\.colorScheme) var colorScheme
     var body: some WidgetConfiguration {
         AppIntentConfiguration(
                     kind: kind,
@@ -246,7 +264,7 @@ struct Quotes: SwiftUI.Widget {
         #else
         .supportedFamilies([.accessoryCircular,
                             .accessoryRectangular, .accessoryInline,
-                            .systemSmall, .systemMedium, .systemLarge])
+                            .systemSmall, .systemMedium, .systemLarge, .systemExtraLarge])
         #endif
     }
 }

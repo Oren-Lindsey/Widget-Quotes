@@ -6,13 +6,16 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct WidgetDetail: View {
+    var widget: Widget
+    @State var editorMode = false
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationStack {
+            Form {
+                Text(widget.content ?? "")
+            }.navigationTitle("Widget")
+        }
     }
-}
-
-#Preview {
-    WidgetDetail()
 }
