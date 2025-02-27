@@ -19,6 +19,11 @@ struct Quote: AppEntity {
     let fontSize: Double
     let fontWeight: String
     let title: String
+    let tintable: Bool
+    let gradient: Bool
+    let bgColor2: Color
+    let firstColorPos: UnitPoint
+    let secondColorPos: UnitPoint
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "Quote"
     static var defaultQuery = QuotesQuery()
     var displayRepresentation: DisplayRepresentation {
@@ -31,18 +36,35 @@ struct Quote: AppEntity {
         }
     }
 }
+func getGradientLocationFromName(name: String) -> UnitPoint {
+    switch name {
+    case "bottom left": return .bottomLeading
+    case "bottom right": return .bottomTrailing
+    case "bottom center": return .bottom
+    case "left": return .leading
+    case "right": return .trailing
+    case "top left": return .topLeading
+    case "top right": return .topTrailing
+    case "top center": return .top
+    default: return .bottom
+    }
+}
+func StringFromUIColor(color: UIColor) -> String {
+    let components = color.cgColor.components
+    return "[\(components![0]), \(components![1]), \(components![2]), \(components![3])]"
+    }
 struct QuotesQuery: EntityQuery {
     func entities(for identifiers: [Quote.ID]) async throws -> [Quote] {
         let entries = fetchAllEntries()
         let quotes = entries.map {
-            Quote(date: $0.date, timestamp: $0.timestamp, citation: $0.citation, bgColor: $0.bgColor, id: $0.id, content: $0.content, fontSize: $0.fontSize, fontWeight: $0.fontWeight, title: $0.title)
+            Quote(date: $0.date, timestamp: $0.timestamp, citation: $0.citation, bgColor: $0.bgColor, id: $0.id, content: $0.content, fontSize: $0.fontSize, fontWeight: $0.fontWeight, title: $0.title, tintable: $0.tintable, gradient: $0.gradient, bgColor2: getColorFromName(name: $0.bgColor2), firstColorPos: $0.firstColorPos, secondColorPos:$0.secondColorPos)
         }
         return quotes
     }
     func suggestedEntities() async throws -> [Quote] {
         let entries = fetchLatestEntries()
         let quotes = entries.map {
-            Quote(date: $0.date, timestamp: $0.timestamp, citation: $0.citation, bgColor: $0.bgColor, id: $0.id, content: $0.content, fontSize: $0.fontSize, fontWeight: $0.fontWeight, title: $0.title)
+            Quote(date: $0.date, timestamp: $0.timestamp, citation: $0.citation, bgColor: $0.bgColor, id: $0.id, content: $0.content, fontSize: $0.fontSize, fontWeight: $0.fontWeight, title: $0.title, tintable: $0.tintable, gradient: $0.gradient, bgColor2: getColorFromName(name: $0.bgColor2), firstColorPos: $0.firstColorPos, secondColorPos:$0.secondColorPos)
         }
         return quotes
     }
@@ -64,11 +86,20 @@ struct SelectWidgetIntent: WidgetConfigurationIntent {
         init() {
         }
 }
+func UIColorFromString(string: String) -> UIColor {
+        let componentsString = string.replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: "")
+        let components = componentsString.split(separator: ", ")
+        return UIColor(red: CGFloat((components[0] as NSString).floatValue),
+                     green: CGFloat((components[1] as NSString).floatValue),
+                      blue: CGFloat((components[2] as NSString).floatValue),
+                     alpha: CGFloat((components[3] as NSString).floatValue))
+    }
 func getColorFromName(name: String) -> Color {
         switch name {
-        case "auto": return Color.clear
+        case "dynamic": return Color.gray
         case "gray": return Color.gray
         case "white": return Color.white
+        case "black": return Color.black
         case "red": return Color.red
         case "green": return Color.green
         case "mint": return Color.mint
@@ -81,7 +112,8 @@ func getColorFromName(name: String) -> Color {
         case "purple": return Color.purple
         case "indigo": return Color.indigo
         case "brown": return Color.brown
-        default: return Color.black
+        case "primary": return Color.primary
+        default: return Color(UIColorFromString(string: name))
         }
 }
 func getFontWeightFromName(name: String) -> Font.Weight {
@@ -108,6 +140,11 @@ struct QuotesEntry: TimelineEntry {
     let fontSize: Double
     let fontWeight: String
     let title: String
+    let tintable: Bool
+    let gradient: Bool
+    let bgColor2: String
+    let firstColorPos: UnitPoint
+    let secondColorPos: UnitPoint
 }
 func fetchLatestEntry() -> QuotesEntry? {
     let context = SharedCoreDataManager.shared.viewContext
@@ -118,12 +155,12 @@ func fetchLatestEntry() -> QuotesEntry? {
     do {
         let results = try context.fetch(fetchRequest)
         if let latest = results.first {
-            return QuotesEntry(date: Date(), timestamp: latest.timestamp ?? Date(), content: latest.content ?? "", citation: latest.citation ?? "", bgColor: getColorFromName(name: latest.bgColor!), id: UUID(), fontSize: latest.fontSize, fontWeight: latest.fontWeight ?? "regular", title: "")
+            return QuotesEntry(date: Date(), timestamp: latest.timestamp ?? Date(), content: latest.content ?? "", citation: latest.citation ?? "", bgColor: getColorFromName(name: latest.bgColor!), id: UUID(), fontSize: latest.fontSize, fontWeight: latest.fontWeight ?? "regular", title: "", tintable: true, gradient: latest.gradient, bgColor2: latest.bgColor2 ?? "red", firstColorPos: getGradientLocationFromName(name: latest.firstColorPos ?? "top center"), secondColorPos: getGradientLocationFromName(name: latest.secondColorPos ?? "bottom center"))
         }
     } catch {
         print("Error fetching data: \(error)")
     }
-    return QuotesEntry(date: Date(), timestamp: Date(), content: "No Data", citation: "", bgColor: .clear, id: UUID(), fontSize: 12.0, fontWeight: "regular", title: "")
+    return QuotesEntry(date: Date(), timestamp: Date(), content: "No Data", citation: "", bgColor: .clear, id: UUID(), fontSize: 12.0, fontWeight: "regular", title: "", tintable: true, gradient: false, bgColor2: "red", firstColorPos: .top, secondColorPos: .bottom)
 }
 func fetchLatestEntries() -> [QuotesEntry] {
     let context = SharedCoreDataManager.shared.viewContext
@@ -134,7 +171,7 @@ func fetchLatestEntries() -> [QuotesEntry] {
         let results = try context.fetch(fetchRequest)
         if !results.isEmpty {
             return results.map {
-                QuotesEntry(date: Date(), timestamp: $0.timestamp ?? Date(), content: $0.content ?? "", citation: $0.citation ?? "", bgColor: getColorFromName(name: $0.bgColor!), id: $0.id!, fontSize: $0.fontSize, fontWeight: $0.fontWeight ?? "regular", title: $0.title ?? "")
+                QuotesEntry(date: Date(), timestamp: $0.timestamp ?? Date(), content: $0.content ?? "", citation: $0.citation ?? "", bgColor: getColorFromName(name: $0.bgColor!), id: $0.id!, fontSize: $0.fontSize, fontWeight: $0.fontWeight ?? "regular", title: $0.title ?? "", tintable: $0.tintable, gradient: $0.gradient, bgColor2: $0.bgColor2 ?? "red", firstColorPos: getGradientLocationFromName(name: $0.firstColorPos ?? "top center"), secondColorPos: getGradientLocationFromName(name: $0.secondColorPos ?? "bottom center"))
             }
         }
     } catch {
@@ -150,7 +187,8 @@ func fetchAllEntries() -> [QuotesEntry] {
         let results = try context.fetch(fetchRequest)
         if !results.isEmpty {
             return results.map {
-                QuotesEntry(date: Date(), timestamp: $0.timestamp ?? Date(), content: $0.content ?? "", citation: $0.citation ?? "", bgColor: getColorFromName(name: $0.bgColor!), id: $0.id!, fontSize: $0.fontSize, fontWeight: $0.fontWeight ?? "regular", title: $0.title ?? "")
+                //QuotesEntry(date: Date(), timestamp: $0.timestamp ?? Date(), content: $0.content ?? "", citation: $0.citation ?? "", bgColor: getColorFromName(name: $0.bgColor!), id: $0.id!, fontSize: $0.fontSize, fontWeight: $0.fontWeight ?? "regular", title: $0.title ?? "", tintable: $0.tintable)
+                QuotesEntry(date: Date(), timestamp: $0.timestamp ?? Date(), content: $0.content ?? "", citation: $0.citation ?? "", bgColor: getColorFromName(name: $0.bgColor!), id: $0.id!, fontSize: $0.fontSize, fontWeight: $0.fontWeight ?? "regular", title: $0.title ?? "", tintable: $0.tintable, gradient: $0.gradient, bgColor2: $0.bgColor2 ?? "red", firstColorPos: getGradientLocationFromName(name: $0.firstColorPos ?? "top center"), secondColorPos: getGradientLocationFromName(name: $0.secondColorPos ?? "bottom center"))
             }
         }
     } catch {
@@ -163,16 +201,16 @@ struct Provider: AppIntentTimelineProvider {
         let context = SharedCoreDataManager.shared.viewContext
 
         func placeholder(in context: Context) -> QuotesEntry {
-            return QuotesEntry(date: Date(), timestamp: Date(), content: "Loading...", citation: "", bgColor: .red, id: UUID(), fontSize: 10, fontWeight: "regular", title: "")
+            return QuotesEntry(date: Date(), timestamp: Date(), content: "No Data", citation: "", bgColor: .clear, id: UUID(), fontSize: 12.0, fontWeight: "regular", title: "", tintable: true, gradient: false, bgColor2: "red", firstColorPos: .top, secondColorPos: .bottom)
         }
 
         func snapshot(for configuration: SelectWidgetIntent, in context: Context) async -> QuotesEntry {
-            let entry = fetchLatestEntry() ?? QuotesEntry(date: Date(), timestamp: Date(), content: "No Data", citation: "", bgColor: .clear, id: UUID(), fontSize: 10, fontWeight: "regular", title: "")
+            let entry = fetchLatestEntry() ?? QuotesEntry(date: Date(), timestamp: Date(), content: "No Data", citation: "", bgColor: .clear, id: UUID(), fontSize: 12.0, fontWeight: "regular", title: "", tintable: true, gradient: false, bgColor2: "red", firstColorPos: .top, secondColorPos: .bottom)
             return entry
         }
     func timeline(for configuration: SelectWidgetIntent, in context: Context) async -> Timeline<QuotesEntry> {
         let q = configuration.quote
-        let entry = QuotesEntry(date: Date(), timestamp: q.timestamp, content: q.content, citation: q.citation, bgColor: q.bgColor, id: q.id, fontSize: q.fontSize, fontWeight: q.fontWeight, title: q.title)
+        let entry = QuotesEntry(date: Date(), timestamp: q.timestamp, content: q.content, citation: q.citation, bgColor: q.bgColor, id: q.id, fontSize: q.fontSize, fontWeight: q.fontWeight, title: q.title, tintable: q.tintable, gradient: q.gradient, bgColor2: StringFromUIColor(color: UIColor(q.bgColor2)), firstColorPos: q.firstColorPos, secondColorPos: q.secondColorPos)
         let timeline = Timeline(entries: [entry], policy: .never)
         return timeline
     }
@@ -187,20 +225,20 @@ struct QuotesEntryView : View {
     var body: some View {
         switch family {
         case .accessoryCircular:
-            Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(true)
+            Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(entry.tintable)
         case .accessoryRectangular:
             VStack {
                 Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight))
                 if entry.citation != "" {
                     Text(entry.citation).font(.system(size: entry.fontSize - 1)).fontWeight(getFontWeightFromName(name: entry.fontWeight))
                 }
-            }.widgetAccentable(true)
+            }.widgetAccentable(entry.tintable)
         case .accessoryInline:
-            Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(true)
+            Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(entry.tintable)
         case .systemSmall:
             VStack {
                 Spacer()
-                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(true)
+                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(entry.tintable)
                 Spacer()
                 if entry.citation != "" {
                     Text(entry.citation).font(.system(size: entry.fontSize - 1)).fontWeight(getFontWeightFromName(name: entry.fontWeight))
@@ -209,7 +247,7 @@ struct QuotesEntryView : View {
         case .systemLarge:
             VStack {
                 Spacer()
-                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(true)
+                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(entry.tintable)
                 Spacer()
                 if entry.citation != "" {
                     Text(entry.citation).font(.system(size: entry.fontSize - 1)).fontWeight(getFontWeightFromName(name: entry.fontWeight))
@@ -218,7 +256,7 @@ struct QuotesEntryView : View {
         case .systemMedium:
             VStack {
                 Spacer()
-                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(true)
+                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(entry.tintable)
                 Spacer()
                 if entry.citation != "" {
                     Text(entry.citation).font(.system(size: entry.fontSize - 1)).fontWeight(getFontWeightFromName(name: entry.fontWeight))
@@ -227,7 +265,7 @@ struct QuotesEntryView : View {
         case .systemExtraLarge:
             VStack {
                 Spacer()
-                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(true)
+                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(entry.tintable)
                 Spacer()
                 if entry.citation != "" {
                     Text(entry.citation).font(.system(size: entry.fontSize - 1)).fontWeight(getFontWeightFromName(name: entry.fontWeight))
@@ -236,7 +274,7 @@ struct QuotesEntryView : View {
         default:
             VStack {
                 Spacer()
-                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(true)
+                Text(entry.content).font(.system(size: entry.fontSize)).fontWeight(getFontWeightFromName(name: entry.fontWeight)).widgetAccentable(entry.tintable)
                 Spacer()
                 if entry.citation != "" {
                     Text(entry.citation).font(.system(size: entry.fontSize - 1)).fontWeight(getFontWeightFromName(name: entry.fontWeight))
@@ -254,7 +292,7 @@ struct Quotes: SwiftUI.Widget {
                     kind: kind,
                     intent: SelectWidgetIntent.self,
                     provider: Provider()) { entry in
-                        QuotesEntryView(entry: entry).containerBackground(entry.bgColor.gradient, for: .widget).padding()
+                        QuotesEntryView(entry: entry).containerBackground(entry.gradient ? AnyShapeStyle(LinearGradient(colors: [entry.bgColor, Color(UIColorFromString(string: entry.bgColor2))], startPoint: entry.firstColorPos, endPoint: entry.secondColorPos)) : AnyShapeStyle(entry.bgColor.gradient), for: .widget).padding()
                 }
         .configurationDisplayName("Quote")
         .description("Displays customizable text.")

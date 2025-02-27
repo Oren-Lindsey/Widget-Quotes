@@ -7,15 +7,29 @@
 
 import SwiftUI
 import CoreData
-let rainbowColors = ["auto", "red", "orange", "yellow", "green", "mint", "teal", "cyan", "blue", "indigo", "purple", "brown", "gray", "white", "black"]
+import Foundation
+import CoreMotion
 extension AnyGradient: @retroactive View {
     public var body: some View {
         Rectangle().fill(self)
     }
 }
+func StringFromUIColor(color: UIColor) -> String {
+    let components = color.cgColor.components
+    return "[\(components![0]), \(components![1]), \(components![2]), \(components![3])]"
+    }
+    
+func UIColorFromString(string: String) -> UIColor {
+        let componentsString = string.replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: "")
+        let components = componentsString.split(separator: ", ")
+        return UIColor(red: CGFloat((components[0] as NSString).floatValue),
+                     green: CGFloat((components[1] as NSString).floatValue),
+                      blue: CGFloat((components[2] as NSString).floatValue),
+                     alpha: CGFloat((components[3] as NSString).floatValue))
+    }
 func getColorFromName(name: String) -> Color {
         switch name {
-        case "auto": return Color.gray
+        case "dynamic": return Color.gray
         case "gray": return Color.gray
         case "white": return Color.white
         case "black": return Color.black
@@ -32,7 +46,7 @@ func getColorFromName(name: String) -> Color {
         case "indigo": return Color.indigo
         case "brown": return Color.brown
         case "primary": return Color.primary
-        default: return Color.black
+        default: return Color(UIColorFromString(string: name))
         }
 }
 func getFontWeightFromName(name: String) -> Font.Weight {
@@ -49,20 +63,54 @@ func getFontWeightFromName(name: String) -> Font.Weight {
         default: return .regular
     }
 }
+func getGradientLocationFromName(name: String) -> UnitPoint {
+    switch name {
+    case "bottom left": return .bottomLeading
+    case "bottom right": return .bottomTrailing
+    case "bottom center": return .bottom
+    case "left": return .leading
+    case "right": return .trailing
+    case "top left": return .topLeading
+    case "top right": return .topTrailing
+    case "top center": return .top
+    default: return .bottom
+    }
+}
 struct ContentView: View {
     let fontWeights = ["black", "heavy", "bold", "semibold", "medium", "regular", "light", "thin", "ultralight"]
+    let gradientLocations = ["bottom left", "bottom right", "bottom center", "left", "right", "top left", "top right", "top center"]
+    let motionManager = CMMotionManager()
     @State private var showingPopover = false
     @State var content: String = "Your text here"
     @State var citation: String = "Citation"
-    @State var bgColor: String = "red"
     @State var fontSize: Double = 17.0
     @State var fontWeight: String = "regular"
     @State var title: String = ""
-    @State var previewColor: String = "red"
     @State var previewText: String = "primary"
+    @State var customColorCode: Color = Color.red
+    @State var tintable: Bool = true
+    @State var gradientColorCode: Color = Color.blue
+    @State var gradientMode: Bool = false
+    @State var firstColorPos: String = "top center"
+    @State var secondColorPos: String = "bottom center"
+    @State var roll: Double = 0
+    @State var pitch: Double = 0
+    @State var yaw: Double = 0
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.managedObjectContext) var context
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Widget.timestamp, ascending: true)], animation: .default) private var widgets: FetchedResults<Widget>
+    func fetchMotionData() {
+        if motionManager.isDeviceMotionAvailable {
+           motionManager.deviceMotionUpdateInterval = 0.01
+           motionManager.startDeviceMotionUpdates(to: .main) { motion, _ in
+               if let motion {
+                   roll = motion.attitude.roll
+                   pitch = motion.attitude.pitch
+                   yaw = motion.attitude.yaw
+               }
+           }
+        }
+    }
     var body: some View {
         NavigationStack {
             List {
@@ -71,8 +119,10 @@ struct ContentView: View {
                             WidgetDetail(widget: widget)
                         } label: {
                             HStack {
+                                let startPoint = getGradientLocationFromName(name: widget.firstColorPos ?? "top center")
+                                let endPoint = getGradientLocationFromName(name: widget.secondColorPos ?? "bottom center")
                                 RoundedRectangle(cornerRadius: 10)
-                                    .fill(getColorFromName(name: widget.bgColor!).gradient)
+                                    .fill(widget.gradient ? AnyShapeStyle(LinearGradient(colors: [Color(UIColorFromString(string: widget.bgColor!)), Color(UIColorFromString(string: widget.bgColor2!))], startPoint: startPoint, endPoint: endPoint)) : AnyShapeStyle(getColorFromName(name: widget.bgColor!).gradient))
                                     .frame(width: 50, height: 50)
                                     .overlay(
                                         Text(widget.content?.first?.uppercased() ?? "").font(.title).foregroundColor(colorScheme == .dark ? .white : .black)
@@ -81,7 +131,7 @@ struct ContentView: View {
                                 HStack {
                                     VStack {
                                         HStack {
-                                            Text((widget.title != "" ? widget.title : widget.content)!).font(.callout).foregroundStyle(.primary)
+                                            Text((widget.title != "" ? widget.title : widget.content) ?? "No title").font(.callout).foregroundStyle(.primary)
                                             Spacer()
                                         }
                                         if widget.citation != nil {
@@ -96,7 +146,9 @@ struct ContentView: View {
                                 Spacer()
                             }
                         }
-                    }.onDelete(perform: deleteItems)
+                    }.onDelete(perform: deleteItems).onAppear() {
+                        fetchMotionData()
+                    }
             }.listStyle(.plain).scrollContentBackground(.hidden).navigationTitle("Your Widgets").toolbar {
                 #if os(iOS)
                     ToolbarItem(placement: .primaryAction) {
@@ -113,31 +165,6 @@ struct ContentView: View {
                     }
                 }
             }
-        }.onChange(of: bgColor) {
-            if colorScheme == .light && bgColor == "auto" {
-                previewColor = "white"
-            } else if colorScheme == .dark && bgColor == "auto" {
-                previewColor = "black"
-            } else {
-                previewColor = bgColor
-            }
-        }.onChange(of: colorScheme) {
-            // Special case to handle if someone switches their color scheme while in the editor and using the default color
-            if previewColor == "white" {
-                previewColor = "black"
-            } else if previewColor == "black" {
-                previewColor = "white"
-            } else {
-                previewColor = bgColor
-            }
-        }.onChange(of: previewColor) {
-            if previewColor == "black" {
-                previewText = "white"
-            } else if previewColor == "white" {
-                previewText = "black"
-            } else {
-                previewText = "primary"
-            }
         }
     }
     @ViewBuilder var newWidgetMenu: some View {
@@ -151,11 +178,11 @@ struct ContentView: View {
                 .padding()
             Spacer()
             Button("Create", systemImage: "plus") {
-                add(content: content, citation: citation, bgColor: bgColor)
+                add(content: content, citation: citation)
                 showingPopover = false
                 content = "Your text here"
                 citation = "Citation"
-                bgColor = "red"
+                customColorCode = Color.red
                 fontSize = 17.0
                 fontWeight = "regular"
                 title = ""
@@ -163,7 +190,11 @@ struct ContentView: View {
         }
             Form {
                 VStack {
-                    RoundedRectangle(cornerRadius: 10).fill(getColorFromName(name: previewColor).gradient)
+                    let startPoint = getGradientLocationFromName(name: firstColorPos)
+                    let endPoint = getGradientLocationFromName(name: secondColorPos)
+                    let pitchDegrees = -pitch * 180 / .pi
+                    let rollDegrees = -roll * 180 / .pi
+                    RoundedRectangle(cornerRadius: 10).fill(gradientMode ? AnyShapeStyle(LinearGradient(colors: [customColorCode, gradientColorCode], startPoint: startPoint, endPoint: endPoint)) : AnyShapeStyle(customColorCode.gradient))
                         .frame(width: 300, height: 300)
                         .overlay(
                             VStack {
@@ -174,8 +205,13 @@ struct ContentView: View {
                                     Text(citation).font(.system(size: fontSize - 1)).fontWeight(getFontWeightFromName(name: fontWeight)).foregroundStyle(getColorFromName(name: previewText))
                                 }
                             }.padding()
-                        ).padding([.horizontal], 50)
-                }.background(Color(UIColor.systemGroupedBackground)).listRowInsets(EdgeInsets())
+                        ).rotation3DEffect(
+                            .degrees(rollDegrees / 7), axis: (x: 0.0, y: 1.0, z: 0.0), anchor: .center, anchorZ: 0.0, perspective: 1.0
+                        ).rotation3DEffect(
+                            .degrees(pitchDegrees / 7), axis: (x: -1, y: 0.0, z: 0.0), anchor: .center, anchorZ: 0.0, perspective: 1.0
+                        ).padding([.horizontal], 50).padding([.vertical], 20).shadow(radius: 7, x: 5, y: 10)
+                    Text("Preview").foregroundStyle(Color.gray)
+                }.background(Color(UIColor.systemGroupedBackground)).listRowInsets(EdgeInsets()).zIndex(0)
                 Section(header: Text("Title")) {
                     TextField("Title - This helps you find the widget later.", text: $title)
                 }
@@ -185,7 +221,7 @@ struct ContentView: View {
                 }
                 Section(header: Text("Text Styling")) {
                     HStack {
-                        Text("Font Size:") //\(Int16(fontSize))
+                        Text("Font Size:")
                         Slider(
                             value: $fontSize,
                             in: 0...100,
@@ -205,29 +241,43 @@ struct ContentView: View {
                     }.pickerStyle(.menu)
                 }
                 Section(header: Text("Background Styling")) {
-                    Picker("Select a background color", selection: $bgColor) {
-                        ForEach(rainbowColors, id: \.self) {
-                            if $0 != "auto" {
+                    ColorPicker("Select a color", selection: $customColorCode, supportsOpacity: true)
+                    if gradientMode {
+                        ColorPicker("Select a second color", selection: $gradientColorCode, supportsOpacity: true)
+                        Picker("First Color Position", selection: $firstColorPos) {
+                            ForEach(gradientLocations, id: \.self) {
                                 Text($0)
-                            } else {
-                                Text("default")
                             }
-                        }
-                    }.pickerStyle(.menu)
+                        }.pickerStyle(.menu)
+                        Picker("Second Color Position", selection: $secondColorPos) {
+                            ForEach(gradientLocations, id: \.self) {
+                                Text($0)
+                            }
+                        }.pickerStyle(.menu)
+                    }
+                    Toggle("Gradient Background", isOn: $gradientMode)
+                }
+                Section(header: Text("System Features")) {
+                    Toggle("Tintable", isOn: $tintable)
                 }
             }.navigationTitle("New Widget")
     }
-    private func add(content: String, citation: String, bgColor: String) {
+    private func add(content: String, citation: String) {
         withAnimation {
             let newItem = Widget(context: context)
             newItem.timestamp = Date()
             newItem.content = content
             newItem.citation = citation
-            newItem.bgColor = bgColor
+            newItem.bgColor = StringFromUIColor(color: UIColor(customColorCode))
+            newItem.bgColor2 = StringFromUIColor(color: UIColor(gradientColorCode))
+            newItem.gradient = gradientMode
             newItem.fontSize = fontSize
             newItem.fontWeight = fontWeight
             newItem.id = UUID()
             newItem.title = title
+            newItem.tintable = tintable
+            newItem.firstColorPos = firstColorPos
+            newItem.secondColorPos = secondColorPos
             do {
                 try context.save()
             } catch {
