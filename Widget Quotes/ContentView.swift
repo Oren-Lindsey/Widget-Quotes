@@ -22,10 +22,14 @@ func StringFromUIColor(color: UIColor) -> String {
 func UIColorFromString(string: String) -> UIColor {
         let componentsString = string.replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: "")
         let components = componentsString.split(separator: ", ")
-        return UIColor(red: CGFloat((components[0] as NSString).floatValue),
-                     green: CGFloat((components[1] as NSString).floatValue),
-                      blue: CGFloat((components[2] as NSString).floatValue),
-                     alpha: CGFloat((components[3] as NSString).floatValue))
+        if components.count > 0 {
+            return UIColor(red: CGFloat((components[0] as NSString).floatValue),
+                           green: CGFloat((components[1] as NSString).floatValue),
+                           blue: CGFloat((components[2] as NSString).floatValue),
+                           alpha: CGFloat((components[3] as NSString).floatValue))
+        } else {
+            return UIColor(Color.primary)
+        }
     }
 func getColorFromName(name: String) -> Color {
         switch name {
@@ -76,9 +80,29 @@ func getGradientLocationFromName(name: String) -> UnitPoint {
     default: return .bottom
     }
 }
+func fontFromName(name: String) -> Font.Design {
+    switch name {
+    case "default": return Font.Design.default
+    case "monospaced": return Font.Design.monospaced
+    case "rounded": return Font.Design.rounded
+    case "serif": return Font.Design.serif
+    default: return Font.Design.default
+    }
+}
+extension View {
+    func `if`<Content: View>(_ conditional: Bool, content: (Self) -> Content) -> some View {
+        if conditional {
+            return AnyView(content(self))
+        } else {
+            return AnyView(self)
+        }
+    }
+}
 struct ContentView: View {
     let fontWeights = ["black", "heavy", "bold", "semibold", "medium", "regular", "light", "thin", "ultralight"]
     let gradientLocations = ["bottom left", "bottom right", "bottom center", "left", "right", "top left", "top right", "top center"]
+    //let fontModifiers = ["regular", "bold", "italic", "monospaced", "monospaced digit", "small caps", "lowercase small caps", "uppercase small caps"]
+    let fonts = ["default", "monospaced", "rounded", "serif"]
     let motionManager = CMMotionManager()
     @State private var showingPopover = false
     @State var content: String = "Your text here"
@@ -86,7 +110,7 @@ struct ContentView: View {
     @State var fontSize: Double = 17.0
     @State var fontWeight: String = "regular"
     @State var title: String = ""
-    @State var previewText: String = "primary"
+    //@State var previewText: String = "primary"
     @State var customColorCode: Color = Color.red
     @State var tintable: Bool = true
     @State var gradientColorCode: Color = Color.blue
@@ -95,7 +119,8 @@ struct ContentView: View {
     @State var secondColorPos: String = "bottom center"
     @State var roll: Double = 0
     @State var pitch: Double = 0
-    @State var yaw: Double = 0
+    @State var font: String = "default"
+    @State var fontColor: Color = Color.primary
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.managedObjectContext) var context
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Widget.timestamp, ascending: true)], animation: .default) private var widgets: FetchedResults<Widget>
@@ -106,7 +131,6 @@ struct ContentView: View {
                if let motion {
                    roll = motion.attitude.roll
                    pitch = motion.attitude.pitch
-                   yaw = motion.attitude.yaw
                }
            }
         }
@@ -125,7 +149,7 @@ struct ContentView: View {
                                     .fill(widget.gradient ? AnyShapeStyle(LinearGradient(colors: [Color(UIColorFromString(string: widget.bgColor!)), Color(UIColorFromString(string: widget.bgColor2!))], startPoint: startPoint, endPoint: endPoint)) : AnyShapeStyle(getColorFromName(name: widget.bgColor!).gradient))
                                     .frame(width: 50, height: 50)
                                     .overlay(
-                                        Text(widget.content?.first?.uppercased() ?? "").font(.title).foregroundColor(colorScheme == .dark ? .white : .black)
+                                        Text(widget.content?.first?.uppercased() ?? "").font(.system(.title, design: fontFromName(name: widget.font ?? "default"))).foregroundColor(Color(UIColorFromString(string: widget.textColor ?? "")))
                                     )
                                 Spacer()
                                 HStack {
@@ -193,6 +217,8 @@ struct ContentView: View {
                 fontSize = 17.0
                 fontWeight = "regular"
                 title = ""
+                font = "default"
+                fontColor = Color.primary
             }.padding([.trailing]).disabled(content.isEmpty).tint(customColorCode)
         }
             Form {
@@ -202,15 +228,21 @@ struct ContentView: View {
                     let pitchDegrees = -pitch * 180 / .pi
                     let rollDegrees = -roll * 180 / .pi
                     ZStack {
+                        RoundedRectangle(cornerRadius: 10).fill(colorScheme == .dark ? Color.black : Color.white)
+                            .frame(width: 300, height: 300).rotation3DEffect(
+                                .degrees(rollDegrees / 7), axis: (x: 0.0, y: 1.0, z: 0.0), anchor: .center, anchorZ: 0.0, perspective: 1.0
+                            ).rotation3DEffect(
+                                .degrees(pitchDegrees / 7), axis: (x: -1, y: 0.0, z: 0.0), anchor: .center, anchorZ: 0.0, perspective: 1.0
+                            )
                         RoundedRectangle(cornerRadius: 10).fill(gradientMode ? AnyShapeStyle(LinearGradient(colors: [customColorCode, gradientColorCode], startPoint: startPoint, endPoint: endPoint)) : AnyShapeStyle(customColorCode.gradient))
                             .frame(width: 300, height: 300)
                             .overlay(
                                 VStack {
                                     Spacer()
-                                    Text(content).font(.system(size: fontSize)).fontWeight(getFontWeightFromName(name: fontWeight)).foregroundStyle(getColorFromName(name: previewText))
+                                    Text(content).font(.system(size: fontSize, design: fontFromName(name: font))).fontWeight(getFontWeightFromName(name: fontWeight)).foregroundColor(fontColor)
                                     Spacer()
                                     if citation.count > 0 {
-                                        Text(citation).font(.system(size: fontSize - 1)).fontWeight(getFontWeightFromName(name: fontWeight)).foregroundStyle(getColorFromName(name: previewText))
+                                        Text(citation).font(.system(size: fontSize - 1, design: fontFromName(name: font))).fontWeight(getFontWeightFromName(name: fontWeight)).foregroundColor(fontColor)
                                     }
                                 }.padding()
                             ).rotation3DEffect(
@@ -242,6 +274,12 @@ struct ContentView: View {
                     TextField("Citation (optional)", text: $citation)
                 }
                 Section(header: Text("Text Styling")) {
+                    ColorPicker("Text Color", selection: $fontColor, supportsOpacity: true)
+                    Picker("Font", selection: $font) {
+                        ForEach(fonts, id: \.self) {
+                            Text($0).font(.system(.body, design: fontFromName(name: $0)))
+                        }
+                    }.pickerStyle(.menu)
                     HStack {
                         Text("Font Size:")
                         Slider(
@@ -300,6 +338,8 @@ struct ContentView: View {
             newItem.tintable = tintable
             newItem.firstColorPos = firstColorPos
             newItem.secondColorPos = secondColorPos
+            newItem.font = font
+            newItem.textColor = StringFromUIColor(color: UIColor(fontColor))
             do {
                 try context.save()
             } catch {

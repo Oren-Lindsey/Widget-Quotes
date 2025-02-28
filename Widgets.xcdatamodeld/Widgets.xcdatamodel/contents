@@ -6,11 +6,13 @@
         <attribute name="citation" attributeType="String"/>
         <attribute name="content" attributeType="String"/>
         <attribute name="firstColorPos" optional="YES" attributeType="String"/>
+        <attribute name="font" optional="YES" attributeType="String"/>
         <attribute name="fontSize" optional="YES" attributeType="Double" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="fontWeight" optional="YES" attributeType="String"/>
         <attribute name="gradient" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="secondColorPos" optional="YES" attributeType="String"/>
+        <attribute name="textColor" optional="YES" attributeType="String"/>
         <attribute name="timestamp" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="tintable" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="title" optional="YES" attributeType="String"/>
