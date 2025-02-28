@@ -168,10 +168,17 @@ struct ContentView: View {
         }
     }
     @ViewBuilder var newWidgetMenu: some View {
+        let gradient = RadialGradient(gradient: Gradient(colors: [.white.opacity(0.15), .white.opacity(0.1), .white.opacity(0.05), .clear]), center: .center, startRadius: 0, endRadius: 200)
         HStack {
             Button("Cancel") {
                 showingPopover = false
-            }.padding([.leading])
+                content = "Your text here"
+                citation = "Citation"
+                customColorCode = Color.red
+                fontSize = 17.0
+                fontWeight = "regular"
+                title = ""
+            }.padding([.leading]).tint(customColorCode)
             Spacer()
             Text("New Widget")
                 .font(.headline)
@@ -186,7 +193,7 @@ struct ContentView: View {
                 fontSize = 17.0
                 fontWeight = "regular"
                 title = ""
-            }.padding([.trailing]).disabled(content.isEmpty)
+            }.padding([.trailing]).disabled(content.isEmpty).tint(customColorCode)
         }
             Form {
                 VStack {
@@ -194,22 +201,37 @@ struct ContentView: View {
                     let endPoint = getGradientLocationFromName(name: secondColorPos)
                     let pitchDegrees = -pitch * 180 / .pi
                     let rollDegrees = -roll * 180 / .pi
-                    RoundedRectangle(cornerRadius: 10).fill(gradientMode ? AnyShapeStyle(LinearGradient(colors: [customColorCode, gradientColorCode], startPoint: startPoint, endPoint: endPoint)) : AnyShapeStyle(customColorCode.gradient))
-                        .frame(width: 300, height: 300)
-                        .overlay(
-                            VStack {
-                                Spacer()
-                                Text(content).font(.system(size: fontSize)).fontWeight(getFontWeightFromName(name: fontWeight)).foregroundStyle(getColorFromName(name: previewText))
-                                Spacer()
-                                if citation.count > 0 {
-                                    Text(citation).font(.system(size: fontSize - 1)).fontWeight(getFontWeightFromName(name: fontWeight)).foregroundStyle(getColorFromName(name: previewText))
-                                }
-                            }.padding()
-                        ).rotation3DEffect(
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10).fill(gradientMode ? AnyShapeStyle(LinearGradient(colors: [customColorCode, gradientColorCode], startPoint: startPoint, endPoint: endPoint)) : AnyShapeStyle(customColorCode.gradient))
+                            .frame(width: 300, height: 300)
+                            .overlay(
+                                VStack {
+                                    Spacer()
+                                    Text(content).font(.system(size: fontSize)).fontWeight(getFontWeightFromName(name: fontWeight)).foregroundStyle(getColorFromName(name: previewText))
+                                    Spacer()
+                                    if citation.count > 0 {
+                                        Text(citation).font(.system(size: fontSize - 1)).fontWeight(getFontWeightFromName(name: fontWeight)).foregroundStyle(getColorFromName(name: previewText))
+                                    }
+                                }.padding()
+                            ).rotation3DEffect(
+                                .degrees(rollDegrees / 7), axis: (x: 0.0, y: 1.0, z: 0.0), anchor: .center, anchorZ: 0.0, perspective: 1.0
+                            ).rotation3DEffect(
+                                .degrees(pitchDegrees / 7), axis: (x: -1, y: 0.0, z: 0.0), anchor: .center, anchorZ: 0.0, perspective: 1.0
+                            ).padding([.horizontal], 50).shadow(radius: 7, x: 5, y: 10)
+                        gradient.frame(width: 400, height: 350).rotationEffect(.degrees(20)).offset(x: -rollDegrees * 9, y: -pitchDegrees * 9).mask {
+                            RoundedRectangle(cornerRadius: 10)
+                                .frame(width: 300, height: 300)
+                                .rotation3DEffect(
+                                    .degrees(rollDegrees / 7), axis: (x: 0.0, y: 1.0, z: 0.0), anchor: .center, anchorZ: 0.0, perspective: 1.0
+                                ).rotation3DEffect(
+                                    .degrees(pitchDegrees / 7), axis: (x: -1, y: 0.0, z: 0.0), anchor: .center, anchorZ: 0.0, perspective: 1.0
+                                ).padding([.horizontal], 50).padding([.vertical], 20).shadow(radius: 7, x: 5, y: 10)
+                        }.rotation3DEffect(
                             .degrees(rollDegrees / 7), axis: (x: 0.0, y: 1.0, z: 0.0), anchor: .center, anchorZ: 0.0, perspective: 1.0
                         ).rotation3DEffect(
                             .degrees(pitchDegrees / 7), axis: (x: -1, y: 0.0, z: 0.0), anchor: .center, anchorZ: 0.0, perspective: 1.0
-                        ).padding([.horizontal], 50).padding([.vertical], 20).shadow(radius: 7, x: 5, y: 10)
+                        )
+                    }
                     Text("Preview").foregroundStyle(Color.gray)
                 }.background(Color(UIColor.systemGroupedBackground)).listRowInsets(EdgeInsets()).zIndex(0)
                 Section(header: Text("Title")) {
